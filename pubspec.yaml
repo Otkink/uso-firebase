@@ -36,6 +36,8 @@ dependencies:
   cupertino_icons: ^1.0.2
   firebase_core: ^1.9.0
   cloud_firestore: ^3.0.0
+  image_picker: ^0.8.4+1
+  path_provider: ^2.0.4
 
 dev_dependencies:
   flutter_test:
@@ -76,8 +78,28 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
-  #   - family: Schyler
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: fonts/Nunito/Nunito-Black.ttf
+        - asset: fonts/Nunito/Nunito-BlackItalic.ttf
+        - asset: fonts/Nunito/Nunito-Bold.ttf
+        - asset: fonts/Nunito/Nunito-BoldItalic.ttf
+        - asset: fonts/Nunito/Nunito-ExtraBold.ttf
+        - asset: fonts/Nunito/Nunito-ExtraBoldItalic.ttf
+        - asset: fonts/Nunito/Nunito-ExtraLight.ttf
+        - asset: fonts/Nunito/Nunito-Italic.ttf
+        - asset: fonts/Nunito/Nunito-Light.ttf
+        - asset: fonts/Nunito/Nunito-LightItalic.ttf
+        - asset: fonts/Nunito/Nunito-Regular.ttf
+        - asset: fonts/Nunito/Nunito-SemiBold.ttf
+        - asset: fonts/Nunito/Nunito-SemiBoldItalic.ttf
+    - family: Montserrat
+      fonts:
+        - asset: fonts/Montserrat/
+    - family: Comfortaa
+      fonts:
+        - asset: fonts/Comfortaa/    
   #     fonts:
   #       - asset: fonts/Schyler-Regular.ttf
   #       - asset: fonts/Schyler-Italic.ttf
