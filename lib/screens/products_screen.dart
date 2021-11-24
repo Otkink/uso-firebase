@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_p/providers/firebase_provider.dart';
+import 'package:firebase_p/views/card_product.dart';
 import 'package:flutter/material.dart';
 
 class ListProducts extends StatefulWidget {
@@ -27,7 +28,9 @@ class _ListProductsState extends State<ListProducts> {
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
         if( !snapshot.hasData) return Center(child: CircularProgressIndicator());
         return ListView(
-          children: [],
+          children: snapshot.data!.docs.map((DocumentSnapshot document){
+            return CardProduct(productDocument: document);
+          }).toList()
         );
       }
     );
