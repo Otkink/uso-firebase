@@ -31,7 +31,9 @@ class CardProduct extends StatelessWidget {
             color: Colors.black,
             child: Row(
               children: [
-                Text(productDocument['cveprod'], style: TextStyle(color: Colors.white),)
+                Container(
+                  margin: EdgeInsets.only(left: 10),
+                  child: Text(productDocument['cveprod'], style: TextStyle(color: Colors.white, fontFamily: 'Nunito', fontWeight: FontWeight.w700),))
               ],
             ),
           ),

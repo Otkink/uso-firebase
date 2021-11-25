@@ -38,6 +38,8 @@ dependencies:
   cloud_firestore: ^3.0.0
   image_picker: ^0.8.4+1
   path_provider: ^2.0.4
+  firebase_storage: ^10.1.0
+  firebase_auth: ^3.2.0
 
 dev_dependencies:
   flutter_test:
@@ -96,10 +98,10 @@ flutter:
         - asset: fonts/Nunito/Nunito-SemiBoldItalic.ttf
     - family: Montserrat
       fonts:
-        - asset: fonts/Montserrat/
+        - asset: fonts/Montserrat/Montserrat-Regular.ttf
     - family: Comfortaa
       fonts:
-        - asset: fonts/Comfortaa/    
+        - asset: fonts/Comfortaa/Comfortaa-Regular.ttf
   #     fonts:
   #       - asset: fonts/Schyler-Regular.ttf
   #       - asset: fonts/Schyler-Italic.ttf

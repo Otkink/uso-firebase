@@ -2,11 +2,17 @@
 
 import 'dart:io';
 
+import 'package:firebase_p/models/product_dao.dart';
+import 'package:firebase_p/providers/firebase_provider.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
 class AddingScreen extends StatefulWidget {
   AddingScreen({Key? key}) : super(key: key);
@@ -19,9 +25,10 @@ class _AddingScreenState extends State<AddingScreen> {
 
   TextEditingController _txtName = TextEditingController();
   TextEditingController _txtDsc = TextEditingController();
-
+  late FirebaseProvider _fbp;
 
   File? image;
+  String url = '';
   String avatar = '';
   //String avatar2 = '';
   Future pickImage() async{ //metodo para escoger la imagen de la Galeria
@@ -39,8 +46,8 @@ class _AddingScreenState extends State<AddingScreen> {
         print('Esto es permanente: $imagePermanent');
         avatar = imagePermanent.path;*/
         final imageTemporary = File(image.path);
-        setState(() { }); //actualiza la pagina para que aparezca la nueva imagen
-        setState(() => this.image = imageTemporary );
+        //setState(() { }); //actualiza la pagina para que aparezca la nueva imagen
+        setState(() => this.image = imageTemporary ); //se guarda la ruta temporal en la variable File? image;
         //setState(() => this.image = imagePermanent);
       }
     } on PlatformException catch (e) {
@@ -56,6 +63,12 @@ class _AddingScreenState extends State<AddingScreen> {
     return File(imagePath).copy(image.path);
   }
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _fbp = FirebaseProvider();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -212,7 +225,9 @@ class _AddingScreenState extends State<AddingScreen> {
                         topRight: Radius.circular(50.0),
                         bottomLeft: Radius.circular(50.0)),
                   image: DecorationImage(
-                    image: AssetImage("assets/editphoto.png"),
+                    image: image == null ? 
+                      AssetImage("assets/editphoto.png")
+                      : FileImage(image!) as ImageProvider,
                     fit: BoxFit.cover
                   )
                 ),
@@ -239,8 +254,11 @@ class _AddingScreenState extends State<AddingScreen> {
                         highlightColor: Colors.white54,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30)),
-                        onPressed: () {
+                        onPressed: () async {
                           String desc = _txtDsc.text;
+                          await uploadStatusImage().whenComplete(() {
+                            Navigator.pop(context);
+                          });
                         },
                         child: Text("Agregar",
                             style: TextStyle(
@@ -250,4 +268,71 @@ class _AddingScreenState extends State<AddingScreen> {
           ])),
     );
   }
+
+  Future<void> uploadStatusImage() async {
+    await Firebase.initializeApp();
+    
+    FirebaseStorage storage = FirebaseStorage.instance;
+    Reference ref = storage.ref().child('Product Images');
+    var timeKey = DateTime.now();
+    final imageName = (timeKey.toString()+".jpg");
+    UploadTask uploadTask = ref.child(timeKey.toString() + '.jpg').putFile(image!);
+    
+    uploadTask.whenComplete(() async {
+      url = await ref.child(imageName).getDownloadURL();
+      print(url.toString());
+      await saveToFirebase(url.toString());
+    }).catchError((onError) {
+      print(onError);
+    });
+  }
+
+  Future<void> saveToFirebase(String image_url) async {
+    ProductoDAO producto = ProductoDAO(
+      cveprod: _txtName.text,
+      descprod: _txtDsc.text,
+      imgprod: image_url
+    );
+    await _fbp.saveProduct(producto);
+  }
+  /*Future<void> uploadStatusImage() async {
+    firebase_storage.FirebaseStorage storage = firebase_storage.FirebaseStorage.instance;
+
+    firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance
+    .ref()
+    .child('Product Images');
+
+    var timeKey = DateTime.now();
+    final imageName = (timeKey.toString()+".jpg");
+
+    UploadTask uploadTask = ref.putFile(image!);
+
+    try {
+      await firebase_storage.FirebaseStorage.instance
+          .ref('imagenes/'+imageName)
+          .putFile(image!);
+    } on firebase_storage.FirebaseException catch (e) {
+      // e.g, e.code == 'canceled'
+    }
+
+    String downloadURL = await firebase_storage.FirebaseStorage.instance
+      .ref()
+      .child('Product Images')
+      .child(imageName)
+      .getDownloadURL();
+    url = downloadURL.toString();
+    print("URL: "+url);
+
+    //saveToDatabase(url);
+  }
+
+  void saveToDatabase(String url){
+    firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance
+    .ref()
+    .child('Products');
+  var data = {
+      "imgprod" : url
+    };
+  }*/
+
 }
