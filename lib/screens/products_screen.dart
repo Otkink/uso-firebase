@@ -28,6 +28,7 @@ class _ListProductsState extends State<ListProducts> {
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
         if( !snapshot.hasData) return Center(child: CircularProgressIndicator());
         return ListView(
+          physics: BouncingScrollPhysics(),
           children: snapshot.data!.docs.map((DocumentSnapshot document){
             return CardProduct(productDocument: document);
           }).toList()

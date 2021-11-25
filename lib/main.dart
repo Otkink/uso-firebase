@@ -2,6 +2,7 @@
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_p/screens/adding_screen.dart';
+import 'package:firebase_p/screens/editing_screen.dart';
 import 'package:firebase_p/screens/products_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,7 +40,8 @@ class MyApp extends StatelessWidget {
         }
       ),
       routes: {
-        "/add": (BuildContext context) => AddingScreen()
+        "/add": (BuildContext context) => AddingScreen(),
+        "/edit": (BuildContext context) => EditingScreen()
       },
       debugShowCheckedModeBanner: false,
     );

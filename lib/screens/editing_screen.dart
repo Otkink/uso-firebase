@@ -18,21 +18,23 @@ import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/tap_bounce_container.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
-class AddingScreen extends StatefulWidget {
-  AddingScreen({Key? key}) : super(key: key);
+class EditingScreen extends StatefulWidget {
+  EditingScreen({Key? key}) : super(key: key);
 
   @override
-  _AddingScreenState createState() => _AddingScreenState();
+  _EditingScreenState createState() => _EditingScreenState();
 }
 
-class _AddingScreenState extends State<AddingScreen> {
+class _EditingScreenState extends State<EditingScreen> {
 
   TextEditingController _txtName = TextEditingController();
   TextEditingController _txtDsc = TextEditingController();
   late FirebaseProvider _fbp;
+  var docid = ''; //guarda el id del documento (es el id del registro)
 
   File? image;
   String url = '';
+  bool img_hasChanged = false;
   Future pickImage() async{ //metodo para escoger la imagen de la Galeria
     try {
       final image = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -41,6 +43,7 @@ class _AddingScreenState extends State<AddingScreen> {
         return;
       } else{
         final imageTemporary = File(image.path);
+        img_hasChanged = true; //si ingresa aqui es porque selecciono otra foto, de esta forma el hecho de que abra el ImagePicker no significa que se haya modificado la imagen hasta que realmente haya seleccionado alguna
         //setState(() { }); //actualiza la pagina para que aparezca la nueva imagen
         setState(() => this.image = imageTemporary ); //se guarda la ruta temporal en la variable File? image;
       }
@@ -66,6 +69,12 @@ class _AddingScreenState extends State<AddingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final shinamono = ModalRoute.of(context)!.settings.arguments as Map<String,dynamic>; //cone sta instruccion es posible recuperar los parametros enviados en el Navigator.pushNamed(..., arguments:"...")
+    
+    _txtName.text = shinamono['cveprod'];
+    _txtDsc.text = shinamono['descprod'];
+    url = shinamono['imgprod'];
+
     return Container(
       decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -77,7 +86,7 @@ class _AddingScreenState extends State<AddingScreen> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
-            title: Text("Nuevo producto", style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w900, fontSize: 25)),
+            title: Text("Editar producto", style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w900, fontSize: 25)),
           ),
           backgroundColor: Colors.transparent,
           body: ListView(padding: EdgeInsets.zero, 
@@ -220,7 +229,7 @@ class _AddingScreenState extends State<AddingScreen> {
                         bottomLeft: Radius.circular(50.0)),
                   image: DecorationImage(
                     image: image == null ? 
-                      AssetImage("assets/editphoto.png")
+                      NetworkImage(shinamono['imgprod'])
                       : FileImage(image!) as ImageProvider,
                     fit: BoxFit.cover
                   )
@@ -249,14 +258,15 @@ class _AddingScreenState extends State<AddingScreen> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30)),
                         onPressed: () async { //Valida si es posible realizar la insercion
-                          if(image != null && _txtName.text != '' && _txtDsc.text != ''){//las dos variables txt deben contener texto para que pueda realizarse el update y el file image debe contener el path
+                          if(image != null || url !='' && _txtName.text != '' && _txtDsc.text != ''){//las dos variables txt deben contener texto para que pueda realizarse el update y el file image debe contener el path
+                            docid = shinamono['DocumentID'];//le asigno el valor del id para que sea utilizada por los metodos fuera del context
                             await uploadStatusImage().whenComplete(() {
                               Navigator.pop(context);
                               showTopSnackBar(
                                   context,
                                   CustomSnackBar.success(
                                     message:
-                                        "Producto agregado",
+                                        "Producto actualizado",
                                   ),
                               );
                             });
@@ -290,7 +300,7 @@ class _AddingScreenState extends State<AddingScreen> {
                             }
                           }
                         },
-                        child: Text("Agregar",
+                        child: Text("Actualizar",
                             style: TextStyle(
                                 color: Color(0xff664B8D), fontSize: 20, fontFamily: 'Nunito', fontWeight: FontWeight.bold))),
                   ],
@@ -302,27 +312,31 @@ class _AddingScreenState extends State<AddingScreen> {
   Future<void> uploadStatusImage() async {
     await Firebase.initializeApp();
     
-    FirebaseStorage storage = FirebaseStorage.instance;
-    Reference ref = storage.ref().child('Product Images');
-    var timeKey = DateTime.now();
-    final imageName = (timeKey.toString()+".jpg");
-    UploadTask uploadTask = ref.child(timeKey.toString() + '.jpg').putFile(image!);
-    
-    uploadTask.whenComplete(() async {
-      url = await ref.child(imageName).getDownloadURL();
-      print(url.toString());
-      await saveToFirebase(url.toString());
-    }).catchError((onError) {
-      print(onError);
-    });
+    if(img_hasChanged){ //si la imagen fue cambiada, entonces la subira a Storage y luego actualizara el registro
+      FirebaseStorage storage = FirebaseStorage.instance;
+      Reference ref = storage.ref().child('Product Images');
+      var timeKey = DateTime.now();
+      final imageName = (timeKey.toString()+".jpg");
+      UploadTask uploadTask = ref.child(timeKey.toString() + '.jpg').putFile(image!); //Caso en el que es elija una nueva imagen la sube a Storage
+      
+      uploadTask.whenComplete(() async {
+        url = await ref.child(imageName).getDownloadURL();
+        print(url.toString());
+        await updateInFirebase(url.toString(), docid);
+      }).catchError((onError) {
+        print(onError);
+      });
+    }else{ //si la imagen no fue cambiada, entonces simplemente toma la url de la imagen inicial y luego actualiza el registro
+      await updateInFirebase(url, docid);
+    }
   }
 
-  Future<void> saveToFirebase(String image_url) async {
+  Future<void> updateInFirebase(String image_url, docid) async {
     ProductoDAO producto = ProductoDAO(
       cveprod: _txtName.text,
       descprod: _txtDsc.text,
       imgprod: image_url
     );
-    await _fbp.saveProduct(producto);
+    await _fbp.updateProduct(producto, docid);
   }
 }
